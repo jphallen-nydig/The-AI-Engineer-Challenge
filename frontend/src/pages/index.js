@@ -49,15 +49,18 @@ export default function ChatPage() {
     let aiMsg = { role: "assistant", content: "" };
     setMessages(msgs => [...msgs, aiMsg]);
     try {
+      const requestBody = {
+        developer_message: devPrompt,
+        user_message: input,
+        api_key: apiKey
+      };
+      console.log('Request body:', requestBody);
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          developer_message: devPrompt,
-          user_message: input,
-          api_key: apiKey
-        })
+        body: JSON.stringify(requestBody)
       });
+      console.log('Response object:', res);
       if (!res.body) throw new Error("No response body");
       const reader = res.body.getReader();
       let done = false;
@@ -65,8 +68,10 @@ export default function ChatPage() {
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
+        console.log('Chunk value:', value);
         if (value) {
           const chunk = new TextDecoder().decode(value);
+          console.log('Decoded chunk:', chunk);
           text += chunk;
           setMessages(msgs => {
             const newMsgs = [...msgs];
@@ -75,6 +80,7 @@ export default function ChatPage() {
           });
         }
       }
+      console.log('Final AI response text:', text);
     } catch (err) {
       setMessages(msgs => {
         const newMsgs = [...msgs];
